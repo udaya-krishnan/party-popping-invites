@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConfettiBurst } from "./ConfettiBurst";
 
@@ -45,10 +45,17 @@ export const BalloonGame = ({ onGoldenFound }: BalloonGameProps) => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [poppedCount, setPoppedCount] = useState(0);
 
+  // 🎵 Pop sound
+  const popSound = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
-    const goldenIndex = Math.floor(Math.random() * 12) + 5; // golden appears after at least 5 balloons
+    popSound.current = new Audio("/baloon poping.mpeg");
+
+    const goldenIndex = Math.floor(Math.random() * 12) + 5;
+
     const generated: Balloon[] = Array.from({ length: 18 }, (_, i) => {
       const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+
       return {
         id: i,
         x: 8 + Math.random() * 75,
@@ -61,6 +68,7 @@ export const BalloonGame = ({ onGoldenFound }: BalloonGameProps) => {
         floatDuration: 3 + Math.random() * 3,
       };
     });
+
     setBalloons(generated);
   }, []);
 
@@ -69,15 +77,28 @@ export const BalloonGame = ({ onGoldenFound }: BalloonGameProps) => {
       const balloon = balloons.find((b) => b.id === id);
       if (!balloon || balloon.popped) return;
 
-      setBalloons((prev) => prev.map((b) => (b.id === id ? { ...b, popped: true } : b)));
+      // 🔊 play pop sound
+      if (popSound.current) {
+        popSound.current.currentTime = 0;
+        popSound.current.play();
+      }
+
+      setBalloons((prev) =>
+        prev.map((b) => (b.id === id ? { ...b, popped: true } : b))
+      );
+
       setPoppedCount((c) => c + 1);
 
       if (balloon.isGolden) {
         setShowConfetti(true);
-        setTimeout(() => onGoldenFound(), 1200);
+
+        setTimeout(() => {
+          onGoldenFound();
+        }, 1200);
       } else {
         setPopMessage(balloon.message);
         setShowConfetti(true);
+
         setTimeout(() => {
           setPopMessage(null);
           setShowConfetti(false);
@@ -99,15 +120,16 @@ export const BalloonGame = ({ onGoldenFound }: BalloonGameProps) => {
         <h2 className="text-2xl md:text-4xl font-display font-bold text-foreground mb-2">
           🎈 Pop the Balloons!
         </h2>
+
         <p className="text-sm md:text-base text-muted-foreground font-body">
           Find the golden balloon to reveal the party details!
         </p>
+
         <p className="text-xs text-muted-foreground mt-1">
           Popped: {poppedCount} / {balloons.length}
         </p>
       </motion.div>
 
-      {/* Pop message */}
       <AnimatePresence>
         {popMessage && (
           <motion.div
@@ -117,12 +139,13 @@ export const BalloonGame = ({ onGoldenFound }: BalloonGameProps) => {
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30
                        card-birthday text-center px-8 py-4"
           >
-            <p className="text-xl md:text-2xl font-display font-bold text-foreground">{popMessage}</p>
+            <p className="text-xl md:text-2xl font-display font-bold text-foreground">
+              {popMessage}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Balloons */}
       <div className="relative w-full" style={{ height: "calc(100vh - 140px)" }}>
         <AnimatePresence>
           {balloons
@@ -142,8 +165,16 @@ export const BalloonGame = ({ onGoldenFound }: BalloonGameProps) => {
                 exit={{ scale: 1.5, opacity: 0 }}
                 transition={{
                   scale: { duration: 0.4, delay: balloon.id * 0.05 },
-                  y: { duration: balloon.floatDuration, repeat: Infinity, ease: "easeInOut" },
-                  x: { duration: balloon.floatDuration * 1.3, repeat: Infinity, ease: "easeInOut" },
+                  y: {
+                    duration: balloon.floatDuration,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                  x: {
+                    duration: balloon.floatDuration * 1.3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
                 }}
                 onClick={() => popBalloon(balloon.id)}
                 whileTap={{ scale: 0.8 }}
@@ -159,14 +190,17 @@ export const BalloonGame = ({ onGoldenFound }: BalloonGameProps) => {
                       <stop offset="100%" stopColor={balloon.color} />
                     </radialGradient>
                   </defs>
+
                   <ellipse cx="30" cy="26" rx="26" ry="26" fill={`url(#grad-${balloon.id})`} />
                   <polygon points="30,52 26,56 34,56" fill={balloon.color} />
+
                   <path
                     d="M30 56 Q28 65 30 76"
                     fill="none"
                     stroke="hsl(var(--muted-foreground))"
                     strokeWidth="1.2"
                   />
+
                   {balloon.isGolden && (
                     <text x="30" y="30" textAnchor="middle" fontSize="16" fill="white">
                       ⭐

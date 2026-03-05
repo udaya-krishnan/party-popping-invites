@@ -20,10 +20,10 @@ const Index = () => {
   const toggleMusic = useCallback(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio(
-        "https://cdn.pixabay.com/audio/2022/10/30/audio_f5d205caee.mp3"
+        "/happy brithday to you whistle.mpeg"
       );
       audioRef.current.loop = true;
-      audioRef.current.volume = 0.3;
+      audioRef.current.volume = 0.1;
     }
     if (isPlaying) {
       audioRef.current.pause();
@@ -38,10 +38,10 @@ const Index = () => {
     // Auto-play music
     if (!audioRef.current) {
       audioRef.current = new Audio(
-        "https://cdn.pixabay.com/audio/2022/10/30/audio_f5d205caee.mp3"
+        "/happy brithday to you whistle.mpeg"
       );
       audioRef.current.loop = true;
-      audioRef.current.volume = 0.3;
+      audioRef.current.volume = 0.1;
     }
     audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
   }, []);
